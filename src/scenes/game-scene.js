@@ -84,6 +84,8 @@ export class GameScene extends Phaser.Scene {
     const x = this.scale.width / 2 + (this.#planet.displayHeight / 2) * Math.cos(this.#playerAngleInRadians);
     const y = this.scale.height / 2 + (this.#planet.displayHeight / 2) * Math.sin(this.#playerAngleInRadians);
     this.#player.setPosition(x, y);
+
+    // definindo a rotação do player para que ele fique sempre apontando para fora do planeta, adicionando 90 graus (Math.PI / 2) para corrigir a orientação da imagem do player
     this.#player.rotation = this.#playerAngleInRadians + Math.PI / 2;
   }
 

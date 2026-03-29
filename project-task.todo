@@ -1,8 +1,8 @@
 📦 Project Setup:
-  ☐ Download basic project files
-  ☐ Running project on local web server
-  ☐ Review basic project code
-  ☐ Create Phaser game instance
+  ✔ Download basic project files
+  ✔ Running project on local web server
+  ✔ Review basic project code
+  ✔ Create Phaser game instance
 
 🌍 Earth + Orbiting Player:
   ☐ Load assets
