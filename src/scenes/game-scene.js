@@ -7,7 +7,13 @@ export class GameScene extends Phaser.Scene {
   // variável para armazenar o ângulo de rotação do player
   #playerAngleInRadians;
   #cursorKeys;
+  // variável para armazenar as teclas A e D para controlar a rotação do player
   #wasdKeys;
+  // variável para armazenar o grupo de balas
+  #bulletGroup;
+  // variável para armazenar o tempo do último disparo da bala, para limitar a taxa de disparo
+  #lastBulletFireTime;
+
   constructor() {
     super({
       key: SCENE_KEYS.GAME_SCENE,
@@ -34,6 +40,11 @@ export class GameScene extends Phaser.Scene {
     this.#player = this.add.image(0, 0, ASSET_KEYS.SHIP);
     this.#playerAngleInRadians = 0;
     this.#updatePlayerPosition();
+
+    // criando um grupo para as balas
+    this.#bulletGroup = this.physics.add.group([]);
+    this.#lastBulletFireTime = 0;
+
     this.#cursorKeys = this.input.keyboard.createCursorKeys();
 
     // adicionando as teclas A e D para controlar a rotação do player
@@ -43,13 +54,29 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  update() {
+  update(time) {
     if (this.#cursorKeys.left.isDown || this.#wasdKeys.left.isDown) {
       this.#playerAngleInRadians -= 0.06;
     } else if (this.#cursorKeys.right.isDown || this.#wasdKeys.right.isDown) {
       this.#playerAngleInRadians += 0.06;
     }
     this.#updatePlayerPosition();
+
+    if (Phaser.Input.Keyboard.JustDown(this.#cursorKeys.space) && time > this.#lastBulletFireTime + 200) {
+      this.#fireBullet();
+      this.#lastBulletFireTime = time;
+    }
+
+    this.#bulletGroup.getChildren().forEach((bullet) => {
+      if (
+        bullet.active &&
+        (bullet.x < 0 || bullet.x > this.scale.width || bullet.y < 0 || bullet.y > this.scale.height)
+      ) {
+        // desativando e escondendo a bala quando ela sair da tela para reutilizá-la posteriormente
+        bullet.setActive(false);
+        bullet.setVisible(false);
+      }
+    });
   }
 
   #updatePlayerPosition() {
@@ -58,5 +85,26 @@ export class GameScene extends Phaser.Scene {
     const y = this.scale.height / 2 + (this.#planet.displayHeight / 2) * Math.sin(this.#playerAngleInRadians);
     this.#player.setPosition(x, y);
     this.#player.rotation = this.#playerAngleInRadians + Math.PI / 2;
+  }
+
+  // função para criar uma bala e adicioná-la ao grupo de balas
+  #fireBullet() {
+    const x = this.#player.x;
+    const y = this.#player.y;
+    // calculando a velocidade da bala com base no ângulo de rotação do player
+    const angleInDegrees = Phaser.Math.RadToDeg(this.#playerAngleInRadians);
+
+    const speed = this.physics.velocityFromAngle(angleInDegrees, 400);
+
+    // pegando a primeira bala morta do grupo de balas para reutilizá-la
+    const bullet = this.#bulletGroup.getFirstDead(true, x, y, ASSET_KEYS.BULLET, 0, true);
+
+    // ativando, mostrando e configurando a bala para ser reutilizada, definindo a animação da bala e habilitando o corpo físico para que ela possa colidir com outros objetos
+    bullet.setActive(true).setVisible(true).setScale(1.5).play(ASSET_KEYS.BULLET).enableBody();
+
+    bullet.setVelocity(speed.x, speed.y);
+    bullet.setRotation(this.#player.rotation);
+
+    console.log('fire bullet', this.#bulletGroup.getChildren().length);
   }
 }
